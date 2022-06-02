@@ -7,13 +7,16 @@ const salt = bcryptjs.genSaltSync(saltRounds)
 
 const User = require("../models/User.model");
 
+// require auth middleware
+const { isLoggedIn, isLoggedOut } = require('../middleware/route-guard.js');
+
 // SIGNUP //
 
-router.get("/signup", (req, res) => {
+router.get("/signup", isLoggedOut, (req, res) => {
     res.render("auth/signup")
 } )
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", isLoggedOut, async (req, res) => {
     try {
         const { username, password } = req.body;
 
@@ -29,9 +32,9 @@ router.post("/signup", async (req, res) => {
 
 // LOGIN //
 
-router.get("/login", (req, res) => res.render("auth/login"))
+router.get("/login", isLoggedOut, (req, res) => res.render("auth/login"))
 
-router.post("/login", async (req, res, next) => {
+router.post("/login", isLoggedOut, async (req, res, next) => {
     console.log('SESSION =====> ', req.session);
     
     const { username, password } = req.body;
@@ -63,22 +66,22 @@ router.post("/login", async (req, res, next) => {
 
 // PROFILE //
 
-router.get("/profile", (req, res) => res.render("user/profile", { userInSession: req.session.currentUser }))
+router.get("/profile", isLoggedIn, (req, res) => res.render("user/profile", { userInSession: req.session.currentUser }))
 
 // LOGOUT //
 
-router.post('/logout', (req, res, next) => {
+router.post('/logout', isLoggedIn, (req, res, next) => {
     req.session.destroy(err => {
       if (err) next(err);
       res.redirect('/');
     });
   });
 
+// MIDDLEWARES //
 
+router.get("/main", (req, res) => res.render("auth/main"))
 
-router.get("/main", (req, res) => res.render("user/profile", { userInSession: req.session.currentUser }))
-
-
+router.get("/private", (req, res) => res.render("auth/private"))
 
 module.exports = router
 
